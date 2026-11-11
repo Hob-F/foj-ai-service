@@ -1,0 +1,23 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: foj-ai-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+  ai:
+    openai:
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_API_KEY}
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.7
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: guest
+    password: guest
