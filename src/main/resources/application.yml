@@ -11,7 +11,7 @@ spring:
   ai:
     openai:
       base-url: ${AI_BASE_URL:https://open.bigmodel.cn/api/paas}
-      api-key: ${AI_API_KEY:b98f36cda4ef444f8b8063b519eb24b8.wOO1V8gQ2VjHWqGx}
+      api-key: ${AI_API_KEY:}
       chat:
         completions-path: ${AI_COMPLETIONS_PATH:/v4/chat/completions}
         options:
