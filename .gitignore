@@ -3,3 +3,4 @@ target/
 .idea/
 *.log
 .mvn/
+/src/main/java/com/fuj/ai/controller/AiTestController.java

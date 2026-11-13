@@ -10,12 +10,14 @@ spring:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
   ai:
     openai:
-      base-url: https://api.deepseek.com
-      api-key: ${DEEPSEEK_API_KEY}
+      base-url: ${AI_BASE_URL:https://open.bigmodel.cn/api/paas}
+      api-key: ${AI_API_KEY:b98f36cda4ef444f8b8063b519eb24b8.wOO1V8gQ2VjHWqGx}
       chat:
+        completions-path: ${AI_COMPLETIONS_PATH:/v4/chat/completions}
         options:
-          model: deepseek-chat
+          model: ${AI_MODEL:glm-4-flash}
           temperature: 0.7
+          max-tokens: 1024
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
