@@ -23,3 +23,17 @@ spring:
     port: 5672
     username: guest
     password: guest
+  datasource:
+    url: jdbc:mysql://localhost:3306/foj_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USERNAME:root}
+    password:  ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      schema-locations: classpath:db/schema-mysql.sql
+      mode: always
+
+ai:
+  rate-limit:
+    capacity: 10
+    window-seconds: 60
