@@ -42,7 +42,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String ip = request.getRemoteAddr();
+        // 经网关转发后 remoteAddr 是网关地址,优先取 X-Forwarded-For 首段作为真实客户端 IP,无该头则回退 remoteAddr
+        String ip = resolveClientIp(request);
         if (ipRateLimiter.tryAcquire(ip)) {
             return true;
         }
@@ -52,5 +53,24 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(RATE_LIMIT_BODY);
         return false;
+    }
+
+    /**
+     * 解析真实客户端 IP。
+     *
+     * <p>请求经网关转发后 {@code getRemoteAddr()} 拿到的是网关地址,因此优先取
+     * {@code X-Forwarded-For} 首段(最靠近客户端的地址);无该头或为空时回退
+     * {@code getRemoteAddr()}。</p>
+     *
+     * @param request 请求
+     * @return 真实客户端 IP
+     */
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.trim().isEmpty()) {
+            // 该头可能形如 "client, proxy1, proxy2",取首个元素
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
