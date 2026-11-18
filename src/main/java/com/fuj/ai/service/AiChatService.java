@@ -1,5 +1,6 @@
 package com.fuj.ai.service;
 
+import com.fuj.ai.context.UserContext;
 import com.fuj.ai.dto.AiTestResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,15 +81,20 @@ public class AiChatService {
     /** 当前使用的模型名,从配置读取(代码中不写死模型名)。 */
     private final String model;
 
+    /** 会话归属服务:校验 conversationId 是否属于当前用户。 */
+    private final SessionOwnerService sessionOwnerService;
+
     /**
      * 构造 AI 对话服务。
      *
-     * @param chatClientBuilder Spring AI 提供的 ChatClient 构造器
-     * @param chatMemory        会话记忆组件(窗口上限 20 条)
-     * @param model             模型名(读取自 spring.ai.openai.chat.options.model)
+     * @param chatClientBuilder   Spring AI 提供的 ChatClient 构造器
+     * @param chatMemory          会话记忆组件(窗口上限 20 条)
+     * @param sessionOwnerService 会话归属服务
+     * @param model               模型名(读取自 spring.ai.openai.chat.options.model)
      */
     public AiChatService(ChatClient.Builder chatClientBuilder,
                          ChatMemory chatMemory,
+                         SessionOwnerService sessionOwnerService,
                          @Value("${spring.ai.openai.chat.options.model}") String model) {
         // 无状态单轮客户端:只挂系统角色,不挂记忆 advisor,
         // 避免 /ai/test 这类无 conversationId 的请求触发记忆 advisor 抛异常。
@@ -102,6 +108,7 @@ public class AiChatService {
             .build();
         // 模型 / 温度 / max-tokens 等参数全部交由 application.yml 管理,代码中不写死。
         this.model = model;
+        this.sessionOwnerService = sessionOwnerService;
     }
 
     /**
@@ -146,6 +153,8 @@ public class AiChatService {
      * @return AI 响应(成功或降级)
      */
     public AiTestResponse chatWithMemory(String conversationId, String userPrompt) {
+        // 会话归属校验:越权/未登录时同步抛 BizException,由全局异常处理器转 401/403
+        sessionOwnerService.bindOwner(conversationId, UserContext.get());
         long start = System.currentTimeMillis();
         AiTestResponse response = new AiTestResponse();
         try {
@@ -182,6 +191,8 @@ public class AiChatService {
      * @return 逐段推送的回复内容流
      */
     public Flux<String> streamChat(String conversationId, String userPrompt) {
+        // 会话归属校验:必须在构建 Flux 之前同步执行,异常才能以正确 HTTP 状态码返回客户端
+        sessionOwnerService.bindOwner(conversationId, UserContext.get());
         return memoryChatClient.prompt()
             .user(userPrompt)
             .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))

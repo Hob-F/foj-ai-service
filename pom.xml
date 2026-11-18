@@ -73,6 +73,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Redis:会话归属校验,用 SETNX 绑定 sessionId -> userId -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Spring AI OpenAI 客户端:通过 OpenAI 兼容协议对接智谱 GLM 等大模型 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

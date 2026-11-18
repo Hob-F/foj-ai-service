@@ -8,6 +8,10 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   ai:
     openai:
       base-url: ${AI_BASE_URL:https://open.bigmodel.cn/api/paas}

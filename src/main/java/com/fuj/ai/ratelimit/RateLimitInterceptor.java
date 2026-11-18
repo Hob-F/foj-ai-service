@@ -42,9 +42,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // 经网关转发后 remoteAddr 是网关地址,优先取 X-Forwarded-For 首段作为真实客户端 IP,无该头则回退 remoteAddr
-        String ip = resolveClientIp(request);
-        if (ipRateLimiter.tryAcquire(ip)) {
+        // 登录用户按用户维度限流,匿名用户回退 IP 维度
+        String key = resolveRateLimitKey(request);
+        if (ipRateLimiter.tryAcquire(key)) {
             return true;
         }
         // 超限:返回 429 + 固定 JSON,不让请求进入控制器(同步与 SSE 一视同仁)
@@ -53,6 +53,23 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(RATE_LIMIT_BODY);
         return false;
+    }
+
+    /**
+     * 解析限流 key。
+     *
+     * <p>登录用户(请求头携带非空 {@code X-User-Id})按用户维度限流,返回 {@code u:<userId>};
+     * 匿名用户回退到 X-Forwarded-For 首段,返回 {@code ip:<ip>}。</p>
+     *
+     * @param request 请求
+     * @return 限流 key
+     */
+    private String resolveRateLimitKey(HttpServletRequest request) {
+        String uid = request.getHeader("X-User-Id");
+        if (uid != null && !uid.trim().isEmpty()) {
+            return "u:" + uid.trim();
+        }
+        return "ip:" + resolveClientIp(request);
     }
 
     /**
